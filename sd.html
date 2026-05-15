@@ -1,0 +1,2705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Media Dashboard — Social Intelligence Platform</title>
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #1a1a2e;
+  --glass-bg: rgba(255,255,255,0.05);
+  --accent-primary: #4f9cff;
+  --accent-secondary: #7a5cff;
+  --glow: 0 0 20px rgba(79,156,255,0.4);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0cc;
+  --border-radius: 16px;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 4rem;
+
+  /* Extended tokens */
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-border-hover: rgba(79,156,255,0.35);
+  --card-bg: rgba(26,26,46,0.6);
+  --input-bg: rgba(255,255,255,0.04);
+  --glow-secondary: 0 0 20px rgba(122,92,255,0.35);
+  --transition-fast: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-med: 0.35s cubic-bezier(0.4,0,0.2,1);
+  --nav-height: 68px;
+  --container-max: 1320px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   BACKGROUND LAYERS
+   ============================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,156,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(122,92,255,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 60% 40%, rgba(79,156,255,0.05) 0%, transparent 50%),
+    linear-gradient(160deg, var(--bg-primary) 0%, #0d0d1a 50%, var(--bg-primary) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glowText {
+  0%, 100% { text-shadow: 0 0 20px rgba(79,156,255,0.5), 0 0 40px rgba(79,156,255,0.2); }
+  50%       { text-shadow: 0 0 30px rgba(122,92,255,0.7), 0 0 60px rgba(122,92,255,0.3); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(0.96); }
+}
+
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.5; }
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1, h2, h3, h4 {
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: clamp(2.4rem, 6vw, 5rem); }
+h2 { font-size: clamp(1.6rem, 3vw, 2.5rem); }
+h3 { font-size: clamp(1.1rem, 2vw, 1.4rem); }
+h4 { font-size: 1rem; }
+
+p { color: var(--text-secondary); font-size: 0.95rem; }
+
+a { color: inherit; text-decoration: none; }
+
+body:not(.is-authenticated) .dashboard-shell {
+  display: none;
+}
+
+body.is-authenticated .login-screen {
+  display: none;
+}
+
+/* ============================================================
+   LAYOUT UTILITIES
+   ============================================================ */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--spacing-md);
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.section-label::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   GLASSMORPHISM MIXIN
+   ============================================================ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.login-screen {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--spacing-md);
+}
+
+.login-card {
+  width: min(100%, 520px);
+  background: var(--card-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.38);
+  animation: slideIn 0.6s ease-out both;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--spacing-md);
+}
+
+.login-brand-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  background: linear-gradient(90deg, var(--text-primary), var(--accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-card h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  margin-bottom: var(--spacing-xs);
+}
+
+.login-card p {
+  margin-bottom: var(--spacing-md);
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-xs);
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 100px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--nav-height);
+  background: rgba(10,10,15,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  transition: background var(--transition-med);
+}
+
+.navbar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.nav-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: var(--glow);
+  flex-shrink: 0;
+}
+
+.nav-logo span {
+  background: linear-gradient(90deg, var(--text-primary), var(--accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  list-style: none;
+}
+
+@media (max-width: 767px) { .nav-links { display: none; } }
+
+.nav-links a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--accent-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-fast);
+}
+
+.nav-links a:hover { color: var(--text-primary); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.nav-actions { display: flex; align-items: center; gap: var(--spacing-sm); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.55rem 1.25rem;
+  border-radius: 100px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+.btn-ghost {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  backdrop-filter: blur(8px);
+}
+
+.btn-ghost:hover {
+  transform: scale(1.03);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glow);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--text-primary);
+  box-shadow: var(--glow);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 32px rgba(79,156,255,0.6), 0 0 64px rgba(122,92,255,0.3);
+}
+
+.btn-primary:hover::before { opacity: 1; }
+
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: var(--nav-height);
+  z-index: 1;
+  overflow: hidden;
+}
+
+.hero-orbit {
+  position: absolute;
+  top: 50%;
+  right: -5%;
+  transform: translateY(-50%);
+  width: clamp(320px, 45vw, 600px);
+  height: clamp(320px, 45vw, 600px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+@media (max-width: 1023px) { .hero-orbit { display: none; } }
+
+.orbit-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(79,156,255,0.2);
+  animation: orbitSpin linear infinite;
+}
+
+.orbit-ring:nth-child(1) { animation-duration: 18s; }
+.orbit-ring:nth-child(2) {
+  inset: 15%;
+  border-color: rgba(122,92,255,0.15);
+  animation-duration: 12s;
+  animation-direction: reverse;
+}
+.orbit-ring:nth-child(3) {
+  inset: 30%;
+  border-color: rgba(79,156,255,0.1);
+  animation-duration: 8s;
+}
+
+.orbit-dot {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: var(--glow);
+}
+
+.orbit-ring:nth-child(2) .orbit-dot { background: var(--accent-secondary); box-shadow: var(--glow-secondary); }
+
+.orbit-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(79,156,255,0.2), rgba(122,92,255,0.1), transparent);
+  animation: floatUp 4s ease-in-out infinite;
+}
+
+.hero .container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .hero .container { grid-template-columns: 1fr 1fr; }
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: rgba(79,156,255,0.1);
+  border: 1px solid rgba(79,156,255,0.25);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  margin-bottom: var(--spacing-sm);
+  animation: slideIn 0.6s ease-out both;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.hero-title {
+  animation: slideIn 0.6s 0.1s ease-out both;
+  margin-bottom: var(--spacing-sm);
+}
+
+.hero-title .gradient-word {
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, var(--accent-primary) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  max-width: 520px;
+  margin-bottom: var(--spacing-md);
+  animation: slideIn 0.6s 0.2s ease-out both;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  animation: slideIn 0.6s 0.3s ease-out both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  animation: slideIn 0.6s 0.4s ease-out both;
+}
+
+.hero-stat { text-align: center; }
+
+.hero-stat-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* ============================================================
+   ANALYTICS SECTION
+   ============================================================ */
+.section {
+  position: relative;
+  z-index: 1;
+  padding: var(--spacing-lg) 0;
+  animation: slideIn 0.7s ease-out both;
+}
+
+.section-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.section-header h2 { margin-bottom: var(--spacing-xs); }
+
+/* Metric cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.metric-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md) var(--spacing-sm);
+  transition: transform var(--transition-med), border-color var(--transition-med), box-shadow var(--transition-med);
+  cursor: default;
+}
+
+.metric-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glow);
+}
+
+.metric-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(79,156,255,0.1);
+  border: 1px solid rgba(79,156,255,0.2);
+}
+
+.metric-icon.purple {
+  background: rgba(122,92,255,0.1);
+  border-color: rgba(122,92,255,0.2);
+}
+
+.metric-icon.green {
+  background: rgba(52,211,153,0.1);
+  border-color: rgba(52,211,153,0.2);
+}
+
+.metric-icon.orange {
+  background: rgba(251,146,60,0.1);
+  border-color: rgba(251,146,60,0.2);
+}
+
+.metric-change {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 100px;
+  background: rgba(52,211,153,0.12);
+  color: #34d399;
+  border: 1px solid rgba(52,211,153,0.2);
+}
+
+.metric-change.down {
+  background: rgba(248,113,113,0.1);
+  color: #f87171;
+  border-color: rgba(248,113,113,0.2);
+}
+
+.metric-value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 2px;
+  animation: glowText 4s ease-in-out infinite;
+}
+
+.metric-label { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* Chart area */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+@media (min-width: 768px) {
+  .analytics-grid { grid-template-columns: 2fr 1fr; }
+}
+
+.chart-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  transition: transform var(--transition-med), border-color var(--transition-med);
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-hover);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.chart-card-header h3 { font-size: 1rem; }
+
+.chart-period-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  padding: 3px;
+}
+
+.period-tab {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.period-tab.active {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--text-primary);
+  box-shadow: var(--glow);
+}
+
+/* SVG Bar Chart */
+.bar-chart {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: var(--spacing-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+}
+
+.bar-group {
+  flex: 1;
+  min-width: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: calc(100% - 20px);
+  width: 100%;
+}
+
+.bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  animation: barGrow 0.8s cubic-bezier(0.4,0,0.2,1) both;
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+}
+
+.bar:nth-child(1) { background: linear-gradient(to top, var(--accent-primary), rgba(79,156,255,0.5)); }
+.bar:nth-child(2) { background: linear-gradient(to top, var(--accent-secondary), rgba(122,92,255,0.5)); }
+
+.bar:hover {
+  opacity: 0.85;
+  box-shadow: var(--glow);
+}
+
+.bar-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Donut-ish — CSS only */
+.platform-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.platform-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.platform-name {
+  font-size: 0.8rem;
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.platform-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.platform-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+}
+
+.fill-blue  { background: linear-gradient(90deg, var(--accent-primary), #74c0fc); }
+.fill-purple{ background: linear-gradient(90deg, var(--accent-secondary), #b197fc); }
+.fill-green { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+.fill-pink  { background: linear-gradient(90deg, #f472b6, #f9a8d4); }
+
+.platform-pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 38px;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   INFLUENCER TABLE SECTION
+   ============================================================ */
+.table-container {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: border-color var(--transition-med);
+}
+
+.table-container:hover { border-color: var(--glass-border-hover); }
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.table-toolbar h3 { font-size: 1rem; }
+
+.table-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-width: 180px;
+}
+
+.table-search input {
+  width: 160px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.table-search input::placeholder {
+  color: rgba(160,160,204,0.72);
+}
+
+.creator-form {
+  display: none;
+  grid-template-columns: repeat(5, minmax(120px, 1fr)) auto;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(0,0,0,0.16);
+}
+
+.creator-form.active {
+  display: grid;
+}
+
+.creator-form .form-control {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.no-results-row {
+  display: none;
+}
+
+.no-results-row.show {
+  display: table-row;
+}
+
+.no-results-row td {
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@media (max-width: 1023px) {
+  .creator-form { grid-template-columns: 1fr 1fr; }
+  .creator-form .btn { justify-content: center; }
+}
+
+.influencer-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: none;
+  cellpadding: 0;
+}
+
+.influencer-table thead th {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+
+.influencer-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  cursor: pointer;
+}
+
+.influencer-table tbody tr:last-child { border-bottom: none; }
+
+.influencer-table tbody tr:hover {
+  background: rgba(79,156,255,0.05);
+}
+
+.influencer-table tbody tr.selected {
+  background: rgba(79,156,255,0.1);
+}
+
+.influencer-table td {
+  padding: 14px var(--spacing-md);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.influencer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1.5px solid var(--glass-border);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.av-blue   { background: rgba(79,156,255,0.2); color: var(--accent-primary); border-color: rgba(79,156,255,0.3); }
+.av-purple { background: rgba(122,92,255,0.2); color: var(--accent-secondary); border-color: rgba(122,92,255,0.3); }
+.av-green  { background: rgba(52,211,153,0.2); color: #34d399; border-color: rgba(52,211,153,0.3); }
+.av-pink   { background: rgba(244,114,182,0.2); color: #f472b6; border-color: rgba(244,114,182,0.3); }
+.av-orange { background: rgba(251,146,60,0.2); color: #fb923c; border-color: rgba(251,146,60,0.3); }
+
+.influencer-name-cell {
+  display: flex;
+  align-items: center;
+}
+
+.influencer-name { font-weight: 600; color: var(--text-primary); }
+.influencer-handle { font-size: 0.72rem; color: var(--text-secondary); }
+
+.platform-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pb-instagram { background: rgba(244,114,182,0.12); color: #f472b6; border: 1px solid rgba(244,114,182,0.25); }
+.pb-youtube   { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.pb-tiktok    { background: rgba(160,160,204,0.1); color: var(--text-secondary); border: 1px solid rgba(160,160,204,0.2); }
+.pb-x         { background: rgba(79,156,255,0.1); color: var(--accent-primary); border: 1px solid rgba(79,156,255,0.2); }
+.pb-linkedin  { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-bar-bg {
+  width: 72px;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.score-bar-fg {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.creator-detail-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--glass-border);
+  background: rgba(0,0,0,0.18);
+}
+
+.creator-detail-item {
+  min-width: 0;
+}
+
+.creator-detail-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 3px;
+}
+
+.creator-detail-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.creator-social-grid,
+.creator-performance-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: var(--spacing-xs);
+}
+
+.creator-social-card,
+.creator-performance-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.035);
+}
+
+.creator-social-top,
+.creator-performance-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+  margin-bottom: 6px;
+}
+
+.creator-social-platform,
+.creator-performance-platform {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.creator-social-handle {
+  font-size: 0.78rem;
+  color: var(--accent-primary);
+  overflow-wrap: anywhere;
+}
+
+.creator-performance-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+  padding-top: 5px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.creator-performance-metric strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 767px) {
+  .creator-detail-panel { grid-template-columns: 1fr; }
+  .creator-social-grid,
+  .creator-performance-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   FORM SECTION
+   ============================================================ */
+.form-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .form-section { grid-template-columns: 1fr 1fr; }
+}
+
+.form-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  transition: border-color var(--transition-med);
+}
+
+.form-card:hover { border-color: var(--glass-border-hover); }
+
+.form-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.form-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.form-grid .full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-control {
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  font-family: inherit;
+}
+
+.form-control::placeholder { color: rgba(160,160,204,0.5); }
+
+.form-control:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(79,156,255,0.15);
+}
+
+select.form-control { cursor: pointer; appearance: none; }
+select.form-control option { background: var(--bg-secondary); color: var(--text-primary); }
+
+textarea.form-control { resize: vertical; min-height: 90px; }
+
+.radio-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--glass-border);
+  background: var(--input-bg);
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.radio-option input[type="radio"]:checked {
+  border-color: var(--accent-primary);
+}
+
+.radio-option input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: var(--glow);
+}
+
+.radio-option input[type="radio"]:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+.radio-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.radio-option:hover .radio-label { color: var(--text-primary); }
+
+.form-submit {
+  margin-top: var(--spacing-sm);
+  width: 100%;
+  padding: 12px;
+  justify-content: center;
+}
+
+.form-message {
+  display: none;
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.22);
+  color: #6ee7b7;
+  font-size: 0.82rem;
+}
+
+.form-message.show {
+  display: block;
+}
+
+/* ============================================================
+   LISTS SECTION
+   ============================================================ */
+.lists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.list-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: transform var(--transition-med), border-color var(--transition-med), box-shadow var(--transition-med);
+}
+
+.list-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glow);
+}
+
+.list-card-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.list-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.li-blue   { background: rgba(79,156,255,0.1); }
+.li-purple { background: rgba(122,92,255,0.1); }
+.li-green  { background: rgba(52,211,153,0.1); }
+
+.list-card-title { font-size: 0.9rem; font-weight: 600; }
+
+.data-list {
+  list-style: none;
+  padding: var(--spacing-xs) 0;
+}
+
+.data-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px var(--spacing-md);
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: background var(--transition-fast);
+  cursor: default;
+}
+
+.data-list li:last-child { border-bottom: none; }
+
+.data-list li:hover { background: rgba(79,156,255,0.04); }
+
+.data-list li:hover .list-item-main { color: var(--accent-primary); }
+
+.list-item-main {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color var(--transition-fast);
+}
+
+.list-item-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.list-item-right {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.list-rank {
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(79,156,255,0.1);
+  color: var(--accent-primary);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.list-item-content { display: flex; align-items: center; }
+
+/* Ordered list section */
+.ordered-list {
+  list-style: none;
+  padding: var(--spacing-xs) 0;
+  counter-reset: item;
+}
+
+.ordered-list li {
+  display: flex;
+  align-items: center;
+  padding: 10px var(--spacing-md);
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: background var(--transition-fast);
+  cursor: default;
+}
+
+.ordered-list li:last-child { border-bottom: none; }
+.ordered-list li:hover { background: rgba(122,92,255,0.05); }
+
+.order-num {
+  font-size: 0.68rem;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(122,92,255,0.1);
+  color: var(--accent-secondary);
+}
+
+/* ============================================================
+   IMAGE MAP SECTION
+   ============================================================ */
+.map-wrapper {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: border-color var(--transition-med);
+}
+
+.map-wrapper:hover { border-color: var(--glass-border-hover); }
+
+.map-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.map-header h3 { font-size: 1rem; }
+
+.map-legend {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.map-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 768px) {
+  .map-body { grid-template-columns: 3fr 1fr; }
+}
+
+.map-visual {
+  position: relative;
+  padding: var(--spacing-md);
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-map {
+  width: min(100%, 760px);
+  aspect-ratio: 16 / 9;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(rgba(10,10,15,0.15), rgba(10,10,15,0.2)),
+    url("https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg") center / cover;
+  box-shadow: inset 0 0 70px rgba(0,0,0,0.55);
+}
+
+.pin-map::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 12.5% 16.66%;
+  pointer-events: none;
+}
+
+.map-pin {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -100%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50% 50% 50% 4px;
+  rotate: -45deg;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow: 0 0 0 6px rgba(79,156,255,0.12), var(--glow);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.map-pin::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+
+.map-pin span {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  transform: translateX(-50%) rotate(45deg);
+  rotate: 0deg;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(10,10,15,0.82);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), top var(--transition-fast);
+}
+
+.map-pin:hover,
+.map-pin.active {
+  transform: translate(-50%, -100%) scale(1.12);
+  filter: saturate(1.2);
+  box-shadow: 0 0 0 9px rgba(79,156,255,0.18), 0 0 34px rgba(122,92,255,0.55);
+}
+
+.map-pin:hover span,
+.map-pin.active span {
+  top: -34px;
+  opacity: 1;
+}
+
+.map-pin:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 6px;
+}
+
+.map-panel {
+  border-left: 1px solid var(--glass-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(0,0,0,0.2);
+}
+
+@media (max-width: 767px) {
+  .map-panel { border-left: none; border-top: 1px solid var(--glass-border); }
+}
+
+.map-panel h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--accent-primary);
+}
+
+.region-info {
+  display: none;
+}
+
+.region-info.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.region-info-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.region-info-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.8rem;
+}
+
+.region-info-stat:last-child { border-bottom: none; }
+
+.region-info-key { color: var(--text-secondary); }
+
+.region-info-val {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.map-default {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.map-default-icon {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-xs);
+  opacity: 0.4;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--glass-border);
+  padding: var(--spacing-md) 0;
+  text-align: center;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.footer-logo {
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-links { display: flex; gap: var(--spacing-md); }
+
+.footer-links a {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.footer-links a:hover { color: var(--text-primary); }
+
+.footer-copy { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* ============================================================
+   FOCUS VISIBLE GLOBAL
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb {
+  background: rgba(79,156,255,0.25);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(79,156,255,0.4); }
+
+/* ============================================================
+   ANIMATION DELAYS (stagger cards)
+   ============================================================ */
+.metric-card:nth-child(1) { animation: slideIn 0.5s 0.05s ease-out both; }
+.metric-card:nth-child(2) { animation: slideIn 0.5s 0.12s ease-out both; }
+.metric-card:nth-child(3) { animation: slideIn 0.5s 0.19s ease-out both; }
+.metric-card:nth-child(4) { animation: slideIn 0.5s 0.26s ease-out both; }
+
+.bar-group:nth-child(1)  .bar { animation-delay: 0.0s; }
+.bar-group:nth-child(2)  .bar { animation-delay: 0.05s; }
+.bar-group:nth-child(3)  .bar { animation-delay: 0.10s; }
+.bar-group:nth-child(4)  .bar { animation-delay: 0.15s; }
+.bar-group:nth-child(5)  .bar { animation-delay: 0.20s; }
+.bar-group:nth-child(6)  .bar { animation-delay: 0.25s; }
+.bar-group:nth-child(7)  .bar { animation-delay: 0.30s; }
+
+/* ============================================================
+   RESPONSIVE OVERRIDES
+   ============================================================ */
+@media (max-width: 767px) {
+  :root {
+    --spacing-md: 1.25rem;
+    --spacing-lg: 2.5rem;
+  }
+  .form-grid { grid-template-columns: 1fr; }
+  .table-container { overflow-x: auto; }
+  .hero-stats { gap: var(--spacing-sm); }
+}
+
+@media (max-width: 479px) {
+  .hero-actions { flex-direction: column; }
+  .hero-actions .btn { width: 100%; justify-content: center; }
+}
+
+@media (min-width: 1440px) {
+  :root { --container-max: 1400px; }
+}
+</style>
+</head>
+
+<body>
+
+<section class="login-screen" aria-label="Login">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="nav-logo-icon" aria-hidden="true">✦</div>
+      <div class="login-brand-title">Social Media Dashboard</div>
+    </div>
+
+    <h1>Login</h1>
+    <p>Enter your details to open the analytics dashboard.</p>
+
+    <form id="loginForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="loginName">Name</label>
+          <input class="form-control" id="loginName" name="name" type="text" autocomplete="name" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="loginUsername">Username</label>
+          <input class="form-control" id="loginUsername" name="username" type="text" autocomplete="username" required>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="loginEmail">Gmail</label>
+          <input class="form-control" id="loginEmail" name="email" type="email" autocomplete="email" pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" placeholder="name@gmail.com" required>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="loginPhone">Phone Number</label>
+          <input class="form-control" id="loginPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" pattern="[0-9]{10}" placeholder="10 digit number" required>
+        </div>
+
+        <button class="btn btn-primary login-submit full" type="submit">Open Analytics</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<div class="dashboard-shell">
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="navbar" aria-label="Main navigation">
+  <div class="container">
+    <a href="#" class="nav-logo" aria-label="Social Media Dashboard Home">
+      <div class="nav-logo-icon" aria-hidden="true">✦</div>
+      <span>Social Media Dashboard</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="#analytics">Analytics</a></li>
+      <li><a href="#influencers">Influencers</a></li>
+      <li><a href="#campaigns">Campaigns</a></li>
+      <li><a href="#global-reach">Global</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <span class="user-chip" id="currentUserLabel">Logged in</span>
+      <button class="btn btn-ghost" id="logoutButton" type="button" aria-label="Log out">Log Out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<header class="hero" id="home" aria-label="Hero section">
+  <div class="container">
+    <div>
+      <div class="hero-badge" aria-label="New feature announcement">
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        Powered by Social Media Dashboard v4.2
+      </div>
+
+      <h1 class="hero-title">
+        Social Media Dashboard<br>
+        <span class="gradient-word">Analyser</span>
+      </h1>
+
+      <p class="hero-desc">
+        Real-time analytics, AI-driven insights, and influencer intelligence — unified in one platform built for modern growth teams.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#analytics" class="btn btn-primary" aria-label="Explore the dashboard">
+          Explore Dashboard ↗
+        </a>
+        <a href="#contact" class="btn btn-ghost" aria-label="Request a demo">
+          Request Demo
+        </a>
+      </div>
+
+      <div class="hero-stats" role="list" aria-label="Platform statistics">
+        <div class="hero-stat" role="listitem">
+          <div class="hero-stat-num">4.2B+</div>
+          <div class="hero-stat-label">Events tracked</div>
+        </div>
+        <div class="hero-stat" role="listitem">
+          <div class="hero-stat-num">99.9%</div>
+          <div class="hero-stat-label">Uptime SLA</div>
+        </div>
+        <div class="hero-stat" role="listitem">
+          <div class="hero-stat-num">12ms</div>
+          <div class="hero-stat-label">Avg latency</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative orbit animation -->
+    <div class="hero-orbit" aria-hidden="true" role="presentation">
+      <div class="orbit-ring">
+        <div class="orbit-dot"></div>
+      </div>
+      <div class="orbit-ring">
+        <div class="orbit-dot"></div>
+      </div>
+      <div class="orbit-ring">
+        <div class="orbit-dot"></div>
+      </div>
+      <div class="orbit-core"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main id="main-content">
+
+  <!-- ── ANALYTICS SECTION ──────────────────────────────────── -->
+  <section class="section" id="analytics" aria-label="Analytics overview">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Analytics</div>
+        <h2>Platform Overview</h2>
+        <p>Real-time performance across all connected social channels.</p>
+      </div>
+
+      <!-- Metric cards -->
+      <div class="metrics-grid" role="list" aria-label="Key metrics">
+        <article class="metric-card" role="listitem" aria-label="Total reach metric">
+          <div class="metric-card-top">
+            <div class="metric-icon" aria-hidden="true">◎</div>
+            <span class="metric-change" aria-label="18.4% increase">+18.4%</span>
+          </div>
+          <div class="metric-value" aria-label="284.7 million">284.7M</div>
+          <div class="metric-label">Total Reach</div>
+        </article>
+
+        <article class="metric-card" role="listitem" aria-label="Engagement rate metric">
+          <div class="metric-card-top">
+            <div class="metric-icon purple" aria-hidden="true">◈</div>
+            <span class="metric-change" aria-label="6.2% increase">+6.2%</span>
+          </div>
+          <div class="metric-value" aria-label="8.3 percent">8.3%</div>
+          <div class="metric-label">Engagement Rate</div>
+        </article>
+
+        <article class="metric-card" role="listitem" aria-label="Revenue attributed metric">
+          <div class="metric-card-top">
+            <div class="metric-icon green" aria-hidden="true">◆</div>
+            <span class="metric-change" aria-label="31.0% increase">+31.0%</span>
+          </div>
+          <div class="metric-value" aria-label="$2.4 million">$2.4M</div>
+          <div class="metric-label">Revenue Attributed</div>
+        </article>
+
+        <article class="metric-card" role="listitem" aria-label="Active campaigns metric">
+          <div class="metric-card-top">
+            <div class="metric-icon orange" aria-hidden="true">◉</div>
+            <span class="metric-change down" aria-label="2.1% decrease">−2.1%</span>
+          </div>
+          <div class="metric-value" aria-label="142">142</div>
+          <div class="metric-label">Active Campaigns</div>
+        </article>
+      </div>
+
+      <!-- Charts row -->
+      <div class="analytics-grid">
+
+        <!-- Bar chart -->
+        <div class="chart-card" aria-label="Engagement chart">
+          <div class="chart-card-header">
+            <h3>Engagement Over Time</h3>
+            <div class="chart-period-tabs" role="tablist" aria-label="Time period selection">
+              <span class="period-tab" role="tab" tabindex="0">7D</span>
+              <span class="period-tab active" role="tab" tabindex="0" aria-selected="true">30D</span>
+              <span class="period-tab" role="tab" tabindex="0">90D</span>
+            </div>
+          </div>
+
+          <div class="bar-chart" id="engagementChart" role="img" aria-label="Bar chart showing engagement data for all days in the selected period"></div>
+
+          <div style="display:flex;gap:var(--spacing-md);margin-top:var(--spacing-sm);justify-content:flex-end;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-secondary);">
+              <span style="display:block;width:10px;height:10px;border-radius:3px;background:var(--accent-primary);"></span>
+              Impressions
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-secondary);">
+              <span style="display:block;width:10px;height:10px;border-radius:3px;background:var(--accent-secondary);"></span>
+              Clicks
+            </div>
+          </div>
+        </div>
+
+        <!-- Platform breakdown -->
+        <div class="chart-card" aria-label="Platform breakdown">
+          <div class="chart-card-header">
+            <h3>Platform Split</h3>
+          </div>
+
+          <div class="platform-breakdown" role="list" aria-label="Traffic by platform">
+            <div class="platform-row" role="listitem">
+              <span class="platform-name">Instagram</span>
+              <div class="platform-bar-track">
+                <div class="platform-bar-fill fill-pink" style="width:72%"></div>
+              </div>
+              <span class="platform-pct" aria-label="72 percent">72%</span>
+            </div>
+            <div class="platform-row" role="listitem">
+              <span class="platform-name">TikTok</span>
+              <div class="platform-bar-track">
+                <div class="platform-bar-fill fill-purple" style="width:58%"></div>
+              </div>
+              <span class="platform-pct" aria-label="58 percent">58%</span>
+            </div>
+            <div class="platform-row" role="listitem">
+              <span class="platform-name">YouTube</span>
+              <div class="platform-bar-track">
+                <div class="platform-bar-fill fill-blue" style="width:44%"></div>
+              </div>
+              <span class="platform-pct" aria-label="44 percent">44%</span>
+            </div>
+            <div class="platform-row" role="listitem">
+              <span class="platform-name">LinkedIn</span>
+              <div class="platform-bar-track">
+                <div class="platform-bar-fill fill-green" style="width:31%"></div>
+              </div>
+              <span class="platform-pct" aria-label="31 percent">31%</span>
+            </div>
+            <div class="platform-row" role="listitem">
+              <span class="platform-name">X / Twitter</span>
+              <div class="platform-bar-track">
+                <div class="platform-bar-fill fill-blue" style="width:19%"></div>
+              </div>
+              <span class="platform-pct" aria-label="19 percent">19%</span>
+            </div>
+          </div>
+
+          <div style="margin-top:var(--spacing-md);padding-top:var(--spacing-sm);border-top:1px solid var(--glass-border);">
+            <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:6px;">AI INSIGHT</div>
+            <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.5;">
+              Instagram driving 3× more conversions than your next channel. Consider reallocating 15% budget from X to Reels.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INFLUENCER TABLE SECTION ──────────────────────────── -->
+  <section class="section" id="influencers" aria-label="Influencer management">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Influencers</div>
+        <h2>Creator Intelligence</h2>
+        <p>AI-ranked influencers sorted by predicted ROI and audience quality.</p>
+      </div>
+
+      <div class="table-container">
+        <div class="table-toolbar">
+          <h3>Top Performers</h3>
+          <div style="display:flex;gap:var(--spacing-xs);align-items:center;flex-wrap:wrap;">
+            <label class="table-search" for="creatorSearch">
+              <span aria-hidden="true">⌕</span>
+              <input id="creatorSearch" type="search" placeholder="Search creators" aria-label="Search creators">
+            </label>
+            <button class="btn btn-primary" id="toggleCreatorForm" type="button" style="font-size:0.78rem;padding:0.4rem 1rem;">
+              Add Creator
+            </button>
+          </div>
+        </div>
+
+        <form class="creator-form" id="creatorForm">
+          <input class="form-control" name="name" type="text" placeholder="Creator name" required>
+          <input class="form-control" name="handle" type="text" placeholder="@username" required>
+          <select class="form-control" name="platform" required>
+            <option value="Instagram">Instagram</option>
+            <option value="YouTube">YouTube</option>
+            <option value="TikTok">TikTok</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="X">X / Twitter</option>
+          </select>
+          <input class="form-control" name="followers" type="text" placeholder="Followers" required>
+          <input class="form-control" name="engagement" type="text" placeholder="Engagement %" required>
+          <button class="btn btn-primary" type="submit" style="font-size:0.78rem;padding:0.4rem 1rem;">Save</button>
+        </form>
+
+        <table class="influencer-table" cellpadding="0" cellspacing="0">
+          <thead>
+            <tr data-reach="18.4M" data-last-activity="12 minutes ago">
+              <th>Creator</th>
+              <th>Platform</th>
+              <th>Followers</th>
+              <th>Engagement</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="creatorTableBody">
+            <tr data-reach="9.7M" data-last-activity="43 minutes ago">
+              <td>
+                <div class="influencer-name-cell">
+                  <div class="influencer-avatar av-blue">A</div>
+                  <div>
+                    <div class="influencer-name">Arjun Dev</div>
+                    <div class="influencer-handle">@arjunai</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="platform-badge pb-instagram">Instagram</span></td>
+              <td>1.5M</td>
+              <td>9.2%</td>
+              <td>
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg">
+                    <div class="score-bar-fg" style="width:92%"></div>
+                  </div>
+                  92
+                </div>
+              </td>
+            </tr>
+
+            <tr data-reach="4.1M" data-last-activity="2 hours ago">
+              <td>
+                <div class="influencer-name-cell">
+                  <div class="influencer-avatar av-purple">R</div>
+                  <div>
+                    <div class="influencer-name">Riya Labs</div>
+                    <div class="influencer-handle">@riyalabs</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="platform-badge pb-youtube">YouTube</span></td>
+              <td>890K</td>
+              <td>7.8%</td>
+              <td>
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg">
+                    <div class="score-bar-fg" style="width:85%"></div>
+                  </div>
+                  85
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="influencer-name-cell">
+                  <div class="influencer-avatar av-green">S</div>
+                  <div>
+                    <div class="influencer-name">Sanjay Tech</div>
+                    <div class="influencer-handle">@sanjaydev</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="platform-badge pb-linkedin">LinkedIn</span></td>
+              <td>420K</td>
+              <td>6.4%</td>
+              <td>
+                <div class="score-bar-wrap">
+                  <div class="score-bar-bg">
+                    <div class="score-bar-fg" style="width:72%"></div>
+                  </div>
+                  72
+                </div>
+              </td>
+            </tr>
+
+            <tr class="no-results-row" id="creatorNoResults">
+              <td colspan="5">No creators found</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="creator-detail-panel" id="creatorDetailPanel" aria-live="polite">
+          <div class="creator-detail-item">
+            <div class="creator-detail-label">Selected Creator</div>
+            <div class="creator-detail-value" id="detailCreatorName">Select a creator</div>
+          </div>
+          <div class="creator-detail-item">
+            <div class="creator-detail-label">Individual Reach</div>
+            <div class="creator-detail-value" id="detailCreatorReach">--</div>
+          </div>
+          <div class="creator-detail-item">
+            <div class="creator-detail-label">Last Activity</div>
+            <div class="creator-detail-value" id="detailCreatorActivity">--</div>
+          </div>
+          <div class="creator-social-grid" id="creatorSocialGrid" aria-label="Creator social profiles"></div>
+          <div class="creator-performance-grid" id="creatorPerformanceGrid" aria-label="Creator content performance across profiles"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FORM SECTION ───────────────────────────── -->
+  <section class="section" id="contact" aria-label="Contact form">
+    <div class="container form-section">
+
+      <div class="form-card">
+        <div class="form-title">Get in Touch</div>
+        <div class="form-subtitle">Submit your details</div>
+
+        <form id="contactForm">
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" for="contactName">Name</label>
+              <input class="form-control" id="contactName" name="name" type="text" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="contactEmail">Email</label>
+              <input class="form-control" id="contactEmail" name="email" type="email" required>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">Gender</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="gender" value="Male" required>
+                  <span class="radio-label">Male</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="gender" value="Female">
+                  <span class="radio-label">Female</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" for="contactBio">Bio</label>
+              <textarea class="form-control" id="contactBio" name="bio"></textarea>
+            </div>
+
+            <div class="form-message" id="contactMessage" role="status" aria-live="polite"></div>
+
+            <button class="btn btn-primary form-submit" type="submit">Submit</button>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── LISTS SECTION ───────────────────────────── -->
+  <section class="section">
+    <div class="container lists-grid">
+
+      <div class="list-card">
+        <div class="list-card-header">
+          <div class="list-card-icon li-blue">★</div>
+          <div class="list-card-title">Top Platforms</div>
+        </div>
+        <ul class="data-list">
+          <li><span class="list-item-main">Instagram</span><span class="list-item-right">72%</span></li>
+          <li><span class="list-item-main">TikTok</span><span class="list-item-right">58%</span></li>
+          <li><span class="list-item-main">YouTube</span><span class="list-item-right">44%</span></li>
+        </ul>
+      </div>
+
+      <div class="list-card">
+        <div class="list-card-header">
+          <div class="list-card-icon li-purple">#</div>
+          <div class="list-card-title">Campaign Steps</div>
+        </div>
+        <ul class="ordered-list">
+          <li><span class="order-num">1</span>Plan Campaign</li>
+          <li><span class="order-num">2</span>Select Influencer</li>
+          <li><span class="order-num">3</span>Track Metrics</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── MAP SECTION ───────────────────────────── -->
+  <section class="section" id="global-reach">
+    <div class="container">
+      <div class="map-wrapper">
+        <div class="map-header">
+          <h3>Global Reach</h3>
+        </div>
+
+        <div class="map-body">
+          <div class="map-visual">
+            <div class="pin-map" aria-label="Selectable audience map">
+              <button class="map-pin active" type="button" style="--x:21%;--y:35%;" data-region="north-america" aria-label="Select North America">
+                <span>North America</span>
+              </button>
+              <button class="map-pin" type="button" style="--x:53%;--y:26%;" data-region="europe" aria-label="Select Europe">
+                <span>Europe</span>
+              </button>
+              <button class="map-pin" type="button" style="--x:74%;--y:29%;" data-region="asia" aria-label="Select Asia">
+                <span>Asia</span>
+              </button>
+              <button class="map-pin" type="button" style="--x:55%;--y:48%;" data-region="africa" aria-label="Select Africa">
+                <span>Africa</span>
+              </button>
+              <button class="map-pin" type="button" style="--x:32%;--y:65%;" data-region="latin-america" aria-label="Select Latin America">
+                <span>Latin America</span>
+              </button>
+            </div>
+          </div>
+
+          <aside class="map-panel" aria-live="polite">
+            <h4>Selected Region</h4>
+            <div class="region-info active" data-info="north-america">
+              <div class="region-info-name">North America</div>
+              <div class="region-info-stat"><span class="region-info-key">Reach</span><span class="region-info-val">92.4M</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Engagement</span><span class="region-info-val">8.9%</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Top channel</span><span class="region-info-val">Instagram</span></div>
+            </div>
+            <div class="region-info" data-info="europe">
+              <div class="region-info-name">Europe</div>
+              <div class="region-info-stat"><span class="region-info-key">Reach</span><span class="region-info-val">74.8M</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Engagement</span><span class="region-info-val">7.6%</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Top channel</span><span class="region-info-val">TikTok</span></div>
+            </div>
+            <div class="region-info" data-info="asia">
+              <div class="region-info-name">Asia</div>
+              <div class="region-info-stat"><span class="region-info-key">Reach</span><span class="region-info-val">116.2M</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Engagement</span><span class="region-info-val">9.4%</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Top channel</span><span class="region-info-val">YouTube</span></div>
+            </div>
+            <div class="region-info" data-info="africa">
+              <div class="region-info-name">Africa</div>
+              <div class="region-info-stat"><span class="region-info-key">Reach</span><span class="region-info-val">38.1M</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Engagement</span><span class="region-info-val">6.8%</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Top channel</span><span class="region-info-val">Facebook</span></div>
+            </div>
+            <div class="region-info" data-info="latin-america">
+              <div class="region-info-name">Latin America</div>
+              <div class="region-info-stat"><span class="region-info-key">Reach</span><span class="region-info-val">51.7M</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Engagement</span><span class="region-info-val">8.1%</span></div>
+              <div class="region-info-stat"><span class="region-info-key">Top channel</span><span class="region-info-val">Instagram</span></div>
+            </div>
+          </aside>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-logo">Social Media Dashboard</div>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+    </div>
+    <div class="footer-copy">© 2026 Social Media Dashboard</div>
+  </div>
+</footer>
+
+</div>
+
+<script>
+  const loginForm = document.querySelector('#loginForm');
+  const loginPhone = document.querySelector('#loginPhone');
+  const currentUserLabel = document.querySelector('#currentUserLabel');
+  const logoutButton = document.querySelector('#logoutButton');
+  const engagementChart = document.querySelector('#engagementChart');
+  const periodTabs = document.querySelectorAll('.period-tab');
+  const creatorSearch = document.querySelector('#creatorSearch');
+  const creatorForm = document.querySelector('#creatorForm');
+  const toggleCreatorForm = document.querySelector('#toggleCreatorForm');
+  const creatorTableBody = document.querySelector('#creatorTableBody');
+  const creatorNoResults = document.querySelector('#creatorNoResults');
+  const detailCreatorName = document.querySelector('#detailCreatorName');
+  const detailCreatorReach = document.querySelector('#detailCreatorReach');
+  const detailCreatorActivity = document.querySelector('#detailCreatorActivity');
+  const creatorSocialGrid = document.querySelector('#creatorSocialGrid');
+  const creatorPerformanceGrid = document.querySelector('#creatorPerformanceGrid');
+  const contactForm = document.querySelector('#contactForm');
+  const contactMessage = document.querySelector('#contactMessage');
+  const mapPins = document.querySelectorAll('.map-pin');
+  const regionInfo = document.querySelectorAll('.region-info');
+
+  const renderEngagementChart = (days = 30) => {
+    engagementChart.innerHTML = '';
+    engagementChart.setAttribute('aria-label', `Bar chart showing engagement data for ${days} days`);
+
+    Array.from({ length: days }, (_, index) => {
+      const day = index + 1;
+      const impressions = 42 + ((day * 17) % 54);
+      const clicks = 28 + ((day * 13) % 48);
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+      group.innerHTML = `
+        <div class="bars">
+          <div class="bar" style="height:${impressions}%" aria-label="Day ${day} impressions"></div>
+          <div class="bar" style="height:${clicks}%" aria-label="Day ${day} clicks"></div>
+        </div>
+        <div class="bar-label">${day}</div>
+      `;
+      engagementChart.appendChild(group);
+    });
+  };
+
+  renderEngagementChart(30);
+
+  const showDashboard = (profile) => {
+    document.body.classList.add('is-authenticated');
+    currentUserLabel.textContent = profile.username ? `@${profile.username}` : profile.name;
+    document.querySelector('#analytics')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  loginPhone.addEventListener('input', () => {
+    loginPhone.value = loginPhone.value.replace(/\D/g, '').slice(0, 10);
+  });
+
+  periodTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const days = Number(tab.textContent.replace('D', ''));
+
+      periodTabs.forEach((item) => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-selected');
+      });
+
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      renderEngagementChart(days);
+    });
+  });
+
+  const platformClassMap = {
+    Instagram: 'pb-instagram',
+    YouTube: 'pb-youtube',
+    TikTok: 'pb-tiktok',
+    LinkedIn: 'pb-linkedin',
+    X: 'pb-x'
+  };
+
+  const avatarClassList = ['av-blue', 'av-purple', 'av-green', 'av-pink', 'av-orange'];
+  const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+
+  const filterCreators = () => {
+    const query = creatorSearch.value.trim().toLowerCase();
+    const rows = [...creatorTableBody.querySelectorAll('tr:not(.no-results-row)')];
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const isVisible = row.textContent.toLowerCase().includes(query);
+      row.style.display = isVisible ? '' : 'none';
+      if (isVisible) visibleCount += 1;
+    });
+
+    creatorNoResults.classList.toggle('show', visibleCount === 0);
+  };
+
+  const parseFollowers = (value) => {
+    const normalized = String(value).trim().toUpperCase();
+    const amount = Number.parseFloat(normalized.replace(/[^0-9.]/g, '')) || 0;
+    if (normalized.includes('M')) return amount * 1000000;
+    if (normalized.includes('K')) return amount * 1000;
+    return amount;
+  };
+
+  const formatReach = (value) => {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${Math.round(value / 1000)}K`;
+    return `${Math.round(value)}`;
+  };
+
+  const getLastActivity = (rowIndex) => {
+    const options = ['8 minutes ago', '21 minutes ago', '47 minutes ago', '1 hour ago', '3 hours ago', 'Yesterday'];
+    return options[rowIndex % options.length];
+  };
+
+  const getCreatorProfiles = (row) => {
+    const handle = (row.dataset.handle || '@creator').replace(/^@/, '');
+    const urlHandle = encodeURIComponent(handle.replace(/\s+/g, '').toLowerCase());
+    return [
+      { platform: 'Instagram', handle: `@${handle}.ig`, url: `https://instagram.com/${urlHandle}` },
+      { platform: 'YouTube', handle: `@${handle}tv`, url: `https://youtube.com/@${urlHandle}` },
+      { platform: 'Facebook', handle: `facebook.com/${handle}`, url: `https://facebook.com/${urlHandle}` }
+    ];
+  };
+
+  const getCreatorPerformance = (row) => {
+    const followers = parseFollowers(row.dataset.followers || '0');
+    const engagement = Number.parseFloat(row.dataset.engagement || '0') || 0;
+    const score = Number(row.dataset.score || '70');
+
+    return [
+      {
+        platform: 'Instagram',
+        reach: formatReach(followers * 0.44),
+        engagement: `${Math.max(1, engagement + 1.1).toFixed(1)}%`,
+        content: `${Math.max(6, Math.round(score / 5))} reels`
+      },
+      {
+        platform: 'YouTube',
+        reach: formatReach(followers * 0.31),
+        engagement: `${Math.max(1, engagement - 0.4).toFixed(1)}%`,
+        content: `${Math.max(2, Math.round(score / 14))} videos`
+      },
+      {
+        platform: 'Facebook',
+        reach: formatReach(followers * 0.22),
+        engagement: `${Math.max(1, engagement - 1.2).toFixed(1)}%`,
+        content: `${Math.max(4, Math.round(score / 8))} posts`
+      }
+    ];
+  };
+
+  const renderCreatorProfiles = (row) => {
+    creatorSocialGrid.innerHTML = getCreatorProfiles(row).map((profile) => `
+      <a class="creator-social-card" href="${profile.url}" target="_blank" rel="noreferrer">
+        <div class="creator-social-top">
+          <span class="creator-social-platform">${profile.platform}</span>
+          <span class="platform-badge ${profile.platform === 'Instagram' ? 'pb-instagram' : profile.platform === 'YouTube' ? 'pb-youtube' : 'pb-x'}">${profile.platform}</span>
+        </div>
+        <div class="creator-social-handle">${escapeHtml(profile.handle)}</div>
+      </a>
+    `).join('');
+  };
+
+  const renderCreatorPerformance = (row) => {
+    creatorPerformanceGrid.innerHTML = getCreatorPerformance(row).map((item) => `
+      <div class="creator-performance-card">
+        <div class="creator-performance-top">
+          <span class="creator-performance-platform">${item.platform}</span>
+          <span class="platform-badge ${item.platform === 'Instagram' ? 'pb-instagram' : item.platform === 'YouTube' ? 'pb-youtube' : 'pb-x'}">${item.platform}</span>
+        </div>
+        <div class="creator-performance-metric"><span>Reach</span><strong>${item.reach}</strong></div>
+        <div class="creator-performance-metric"><span>Engagement</span><strong>${item.engagement}</strong></div>
+        <div class="creator-performance-metric"><span>Content</span><strong>${item.content}</strong></div>
+      </div>
+    `).join('');
+  };
+
+  const selectCreatorRow = (row) => {
+    if (!row || row.classList.contains('no-results-row')) return;
+
+    creatorTableBody.querySelectorAll('tr').forEach((item) => item.classList.remove('selected'));
+    row.classList.add('selected');
+
+    detailCreatorName.textContent = row.querySelector('.influencer-name')?.textContent || 'Creator';
+    detailCreatorReach.textContent = row.dataset.reach || '--';
+    detailCreatorActivity.textContent = row.dataset.lastActivity || '--';
+    renderCreatorProfiles(row);
+    renderCreatorPerformance(row);
+  };
+
+  const addCreatorRow = (creator) => {
+    const score = Math.max(1, Math.min(100, Number(creator.score) || Math.round(Number.parseFloat(creator.engagement) * 10) || 70));
+    const platformClass = platformClassMap[creator.platform] || 'pb-x';
+    const avatarClass = avatarClassList[creatorTableBody.querySelectorAll('tr:not(.no-results-row)').length % avatarClassList.length];
+    const handle = creator.handle.startsWith('@') ? creator.handle : `@${creator.handle}`;
+    const engagement = String(creator.engagement).includes('%') ? creator.engagement : `${creator.engagement}%`;
+    const reach = creator.reach || formatReach(parseFollowers(creator.followers) * 0.18);
+    const lastActivity = creator.lastActivity || getLastActivity(creatorTableBody.querySelectorAll('tr:not(.no-results-row)').length);
+    const row = document.createElement('tr');
+    row.dataset.reach = reach;
+    row.dataset.lastActivity = lastActivity;
+    row.dataset.handle = handle;
+    row.dataset.followers = creator.followers;
+    row.dataset.engagement = engagement;
+    row.dataset.score = score;
+
+    row.innerHTML = `
+      <td>
+        <div class="influencer-name-cell">
+          <div class="influencer-avatar ${avatarClass}">${escapeHtml(creator.name.charAt(0).toUpperCase())}</div>
+          <div>
+            <div class="influencer-name">${escapeHtml(creator.name)}</div>
+            <div class="influencer-handle">${escapeHtml(handle)}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="platform-badge ${platformClass}">${escapeHtml(creator.platform === 'X' ? 'X' : creator.platform)}</span></td>
+      <td>${escapeHtml(creator.followers)}</td>
+      <td>${escapeHtml(engagement)}</td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar-bg">
+            <div class="score-bar-fg" style="width:${score}%"></div>
+          </div>
+          ${score}
+        </div>
+      </td>
+    `;
+
+    creatorTableBody.insertBefore(row, creatorNoResults);
+    filterCreators();
+  };
+
+  const savedCreators = JSON.parse(sessionStorage.getItem('dashboardCreators') || '[]');
+  savedCreators.forEach(addCreatorRow);
+
+  creatorTableBody.querySelectorAll('tr:not(.no-results-row)').forEach((row, index) => {
+    row.dataset.handle = row.querySelector('.influencer-handle')?.textContent || '@creator';
+    row.dataset.followers = row.children[2]?.textContent || '0';
+    row.dataset.engagement = row.children[3]?.textContent || '0%';
+    row.dataset.score = row.querySelector('.score-bar-wrap')?.lastChild?.textContent?.trim() || '70';
+    if (!row.dataset.reach) {
+      const followers = row.children[2]?.textContent || '0';
+      row.dataset.reach = formatReach(parseFollowers(followers) * 0.18);
+    }
+    if (!row.dataset.lastActivity) {
+      row.dataset.lastActivity = getLastActivity(index);
+    }
+  });
+
+  selectCreatorRow(creatorTableBody.querySelector('tr:not(.no-results-row)'));
+
+  creatorSearch.addEventListener('input', filterCreators);
+
+  creatorTableBody.addEventListener('click', (event) => {
+    selectCreatorRow(event.target.closest('tr'));
+  });
+
+  toggleCreatorForm.addEventListener('click', () => {
+    creatorForm.classList.toggle('active');
+    if (creatorForm.classList.contains('active')) {
+      creatorForm.querySelector('input')?.focus();
+    }
+  });
+
+  creatorForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    if (!creatorForm.checkValidity()) {
+      creatorForm.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(creatorForm);
+    const creator = {
+      name: formData.get('name').trim(),
+      handle: formData.get('handle').trim(),
+      platform: formData.get('platform'),
+      followers: formData.get('followers').trim(),
+      engagement: formData.get('engagement').trim()
+    };
+
+    const creators = JSON.parse(sessionStorage.getItem('dashboardCreators') || '[]');
+    creators.push(creator);
+    sessionStorage.setItem('dashboardCreators', JSON.stringify(creators));
+    addCreatorRow(creator);
+    creatorForm.reset();
+    creatorForm.classList.remove('active');
+  });
+
+  contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!contactForm.checkValidity()) {
+      contactForm.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(contactForm);
+    const contact = {
+      name: formData.get('name').trim(),
+      email: formData.get('email').trim(),
+      gender: formData.get('gender'),
+      bio: formData.get('bio').trim(),
+      submittedAt: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contact)
+      });
+
+      if (!response.ok) {
+        throw new Error('Contact submission could not be saved');
+      }
+    } catch (error) {
+      const contacts = JSON.parse(sessionStorage.getItem('dashboardContacts') || '[]');
+      contacts.push(contact);
+      sessionStorage.setItem('dashboardContacts', JSON.stringify(contacts));
+      console.warn('Backend unavailable, saved contact in browser session only.', error);
+    }
+
+    contactMessage.textContent = `Thanks, ${contact.name}. Your details were submitted successfully.`;
+    contactMessage.classList.add('show');
+    contactForm.reset();
+  });
+
+  const savedProfile = sessionStorage.getItem('dashboardUser');
+  if (savedProfile) {
+    showDashboard(JSON.parse(savedProfile));
+  }
+
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!loginForm.checkValidity()) {
+      loginForm.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(loginForm);
+    const profile = {
+      name: formData.get('name').trim(),
+      username: formData.get('username').trim(),
+      email: formData.get('email').trim(),
+      phone: formData.get('phone').trim()
+    };
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+
+      if (!response.ok) {
+        throw new Error('Login could not be saved');
+      }
+
+      const savedUser = await response.json();
+      sessionStorage.setItem('dashboardUser', JSON.stringify(savedUser.user));
+      showDashboard(savedUser.user);
+    } catch (error) {
+      sessionStorage.setItem('dashboardUser', JSON.stringify(profile));
+      showDashboard(profile);
+      console.warn('Backend unavailable, using browser session only.', error);
+    }
+  });
+
+  logoutButton.addEventListener('click', () => {
+    sessionStorage.removeItem('dashboardUser');
+    document.body.classList.remove('is-authenticated');
+    loginForm.reset();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  mapPins.forEach((pin) => {
+    pin.addEventListener('click', () => {
+      const selectedRegion = pin.dataset.region;
+
+      mapPins.forEach((item) => item.classList.remove('active'));
+      regionInfo.forEach((item) => item.classList.remove('active'));
+
+      pin.classList.add('active');
+      document.querySelector(`[data-info="${selectedRegion}"]`)?.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
